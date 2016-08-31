@@ -1,8 +1,9 @@
 /**
  * Created by user on 17.08.2016.
  */
-function Master(id, name, servicesList, level, salary){
+function Master(id, name, servicesList, level, salaryValue){
     Entity.call(this, id, name);
+    var salary = salaryValue;
     this.isAvailable = true;
     this.services = servicesList;
     this.level = level;

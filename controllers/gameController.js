@@ -7,7 +7,8 @@ function GameController() {
         gameModel = null,
         gameView = null,
         lastLoopTime,
-        prevTickTime;
+        prevTickTime,
+        tickCounter = 0;
     var getRandomPlace = randomGenerator.getRandomUniqueMasterPlace();
     this.timerId = 0;
     this.create = function() {
@@ -88,7 +89,7 @@ function GameController() {
     function createMaster(id, servicesList){
         var master, services, place;
         services = getRandomEntityIdsSubArray(servicesList, Math.max(Math.floor(Math.random()*3),1));
-        master = new Master(id,null, services, app.models.MasterLevels.getRandomLevel());
+        master = new Master(id,null, services, app.models.MasterLevels.getRandomLevel(), GameConstants.SALARY_COEF * Math.max(Math.floor(Math.random()*4),1));
         master.name = randomGenerator.getRandomPeopleName();
         place = getRandomPlace();
         master.posX = place[0];
@@ -185,9 +186,20 @@ function GameController() {
                     mastersList[i].duration = 0;
                     mastersList[i].isAvailable = true;
                     serviceIsReady(mastersList[i].id);
+
                 }
             }
+            if (tickCounter >= GameConstants.SALARY_TICK_TIME * GameConstants.TICK_TIME)
+            {
+                tickCounter = 0;
+                console.log("SALARY" + mastersList[i].getSalary());
+                gameModel.updateBalance(-mastersList[i].getSalary());
+            }
         }
+
+        var str = "Balance = " + gameModel.getBalance() + "<br>" + "New Clients: " + newClients.length;
+        gameView.updateInfoContainer(str);
+
 
         function serviceIsReady(id) {
             var clients = gameModel.getInProgressClients();
@@ -202,8 +214,7 @@ function GameController() {
 
                 }
             }
-            var str = "Balance = " + gameModel.getBalance() + "<br>" + "New Clients: " + newClients.length;
-            gameView.updateInfoContainer(str);
+
         }
 
         function filterMastersByComplexity(list){
@@ -237,6 +248,7 @@ function GameController() {
         else
         {
             prevTickTime = 0;
+            tickCounter++;
             updateDataGame(dt);
         }
 

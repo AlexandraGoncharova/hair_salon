@@ -3,6 +3,8 @@
  */
 var GameConstants = Object.freeze({
     TICK_TIME : 50,
+    SALARY_TICK_TIME: 30,
+    SALARY_COEF: 100,
     CLIENTS_MAX_COUNT : 20,
     MASTERS_MAX_COUNT : 12,
     START_GAME_SERVICES: 5,
