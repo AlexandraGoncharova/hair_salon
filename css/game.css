@@ -1,0 +1,31 @@
+canvas {
+    display: block;
+    position:absolute;
+    top:0;
+    left:0;
+}
+
+#controls {
+    width: 1000px;
+    height: 30px;
+    background-color: #CC9966;
+    margin-top:800px;
+    left:0px;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+}
+#controls input{
+    width: 100px;
+    height: 25px;
+    margin: 2px 20px;
+}
+
+#info {
+    width: 300px;
+    height: 200px;
+    background-color: #CC9966;
+    margin-left:1000px;
+    top:0px;
+    position: absolute;
+}

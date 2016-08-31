@@ -2,11 +2,14 @@
  * Created by alexa on 21.08.2016.
  */
 var GameConstants = Object.freeze({
+    TICK_TIME : 50,
+    CLIENTS_MAX_COUNT : 20,
+    MASTERS_MAX_COUNT : 12,
     START_GAME_SERVICES: 5,
-    START_GAME_MASTERS: 5,
-    START_GAME_BALANCE: 1000,
+    START_GAME_MASTERS: 3,
     GAME_WIDTH:1000,
-    GAME_HEIGHT:600,
+    GAME_HEIGHT:800,
+    MASTERS_GAME_COORDS: [[71,31],[207,31],[352,31],[490,31],[850,86],[752,234],[154,220],[342,220],[525,220],[902,416],[408,570],[270,680]],
     BACK_IMG_URL:'assets/back.jpg',
     SERVICES_LIST: ["Women's haircuts", "Men's haircuts", "Children's haircuts", "Haircut hot scissors",
         "Hair Styling", "Hair coloring", "Hair Highlights", "Men hair coloring", "Hair Biowave",
@@ -18,8 +21,7 @@ var GameConstants = Object.freeze({
         'assets/default.png',
         'assets/haircut hot scissors.png',
         'assets/women\'s haircuts1.png',
-        'assets/empty.png',
-        'assets/back.jpg'],
+        'assets/empty.png'],
     NAMES_LIST: ["Julieta", "Arlean", "Caitlin", "Jacqulyn", "Alycia", "Hoa", "Tess", "Latonya", "Hortense", "Madelene",
         "Justa", "Santina", "Nicki", "Sueann", "Karima", "Trista", "Pilar", "Sally", "Ema", "Freddy", "Mitch", "Erick", "Maryellen", "Sona", "Sabra", "Meridith", "Robyn", "Kenny", "Lelia", "Zulma", "Trish", "Irina", "Adelaide", "Jonathan", "Roxann", "Jinny", "Adele", "Caitlyn", "Clorinda", "Antwan",
         "Kimberlie", "Pamula", "Velva", "Georgia", "Sharda", "Milly", "Annalisa", "Sanford", "Dominque", "Allene"]
@@ -48,8 +50,16 @@ RandomGenerator.prototype.getRandomUniqueService = function()
     };
 };
 
-const MAX_CLIENTS = 20;
-const MAX_MASTERS = 10;
+RandomGenerator.prototype.getRandomUniqueMasterPlace = function()
+{
+    var list = GameConstants.MASTERS_GAME_COORDS.concat();
+    var index;
+    return function(){
+        index = rand(0, list.length - 1);
+        return list.splice(index,1)[0];
+    };
+};
+
 
 
 

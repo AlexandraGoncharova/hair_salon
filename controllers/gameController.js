@@ -6,14 +6,46 @@ function GameController() {
         randomGenerator = new RandomGenerator(),
         gameModel = null,
         gameView = null,
-        lastLoopTime;
-
+        lastLoopTime,
+        prevTickTime;
+    var getRandomPlace = randomGenerator.getRandomUniqueMasterPlace();
+    this.timerId = 0;
     this.create = function() {
         gameModel = app.models.Game;
-        //gameModel.updateBalance(GameConstants.START_GAME_BALANCE);
         resources.onReady(initGame);
-        resources.load(GameConstants.SERVICES_IMAGES);
+        resources.load(GameConstants.SERVICES_IMAGES.concat(GameConstants.BACK_IMG_URL));
 
+    };
+
+    this.addClient = function ()
+    {
+        var clients = gameModel.getNewClients();
+        if (clients.length >= GameConstants.CLIENTS_MAX_COUNT)
+        return;
+        generateClientToCompany();
+    };
+
+    this.addMaster = function(){
+        var masters = gameModel.getMasters();
+        if (masters.length >= GameConstants.MASTERS_MAX_COUNT)
+        {
+            alert("Can not create masters. Create new salon");
+            return;
+        }
+        if (masters.length > 0)
+        {
+            var id = masters[masters.length - 1].id + 1;
+            var services = gameModel.getServices();
+            var master = createMaster(id, services);
+            gameModel.appendMaster(master);
+        }
+
+    };
+
+    var runClientGeneration = function()
+    {
+        var delay = rand(15*GameConstants.TICK_TIME, 30*GameConstants.TICK_TIME);
+        self.timerId = setInterval(generateClientToCompany, delay);
     };
 
     function initGame(){
@@ -27,16 +59,14 @@ function GameController() {
         gameView = new GameView(self);
         gameView.startGame();
 
-        var delay = rand(200, 600);//privyazivatsy k tikam
-        var timerId = setInterval(generateClientToCompany, delay);
-
-        function generateClientToCompany()
-        {
-            gameModel.appendClient(generateClient());
-            console.log("generated Client");
-        }
+        runClientGeneration();
 
         nextStep();
+    }
+
+    function generateClientToCompany(){
+        gameModel.appendClient(generateClient());
+        console.log("generated Client");
     }
 
     function createServices(count){
@@ -54,23 +84,25 @@ function GameController() {
         }
         return list;
     }
+
+    function createMaster(id, servicesList){
+        var master, services, place;
+        services = getRandomEntityIdsSubArray(servicesList, Math.max(Math.floor(Math.random()*3),1));
+        master = new Master(id,null, services, app.models.MasterLevels.getRandomLevel());
+        master.name = randomGenerator.getRandomPeopleName();
+        place = getRandomPlace();
+        master.posX = place[0];
+        master.posY = place[1];
+        return master;
+    }
     function createMasters(count, servicesList){
         var newObj,
-            services,
             list = [],
-            autoincrement = counter(),
-            startX = 250,
-            startY = 200,
-            offset = 100;
+            autoincrement = counter();
         for (var i = 0; i < count; i++)
         {
             autoincrement.increment();
-            services = getRandomEntityIdsSubArray(servicesList, Math.max(Math.floor(Math.random()*3),1));
-            console.log(services);
-            newObj = new Master(autoincrement.value(),null, services, app.models.MasterLevels.getRandomLevel());
-            newObj.name = randomGenerator.getRandomPeopleName();
-            newObj.posX = i==0?startX:startX + offset * i;
-            newObj.posY = startY;
+            newObj = createMaster(autoincrement.value(), servicesList);
             list.push(newObj);
         }
         return list;
@@ -84,24 +116,21 @@ function GameController() {
         client.name = client.getStringName() + client.id;
         return client;
     }
-    function createObjectsByCount(modelObject, count){
-        var newObj,
-            list = [],
-            autoincrement = counter();
-        for (var i = 0; i < count; i++)
-        {
-            autoincrement.increment();
-            newObj = new modelObject(autoincrement.value());
-            newObj.name = newObj.getStringName();
-            list.push(newObj);
-        }
-        return list;
-    }
+    function updateDataGame(dt){
 
-    function updateGame(dt){
-        //todo update client status and set to free master or add client to stack
         var newClients = gameModel.getNewClients();
         var mastersList = gameModel.getMasters();
+
+        if (newClients.length >= GameConstants.CLIENTS_MAX_COUNT)
+        {
+            clearInterval(self.timerId);
+            self.timerId = null;
+        }
+        else if (!self.timerId)
+        {
+            runClientGeneration();
+        }
+
         if (newClients.length > 0){
             var masterModel,
                 masters,
@@ -118,7 +147,6 @@ function GameController() {
                 {
                     mastersDict = filterMastersByComplexity(masters);
                     serviceModel = gameModel.getServiceById(clientModel.service);
-                    console.log(clientModel.service, serviceModel);
                     if (mastersDict.hasOwnProperty(clientModel.complexity) && mastersDict[clientModel.complexity].length > 0){
                         var list = mastersDict[clientModel.complexity];
                         randIndex = rand(0, list.length - 1);
@@ -137,18 +165,19 @@ function GameController() {
                     clientModel.masterId = masterModel.id;
                 }
                 else
-                //console.log("has no free masters");
+                {
                     clientModel.isWait = true;
+                }
+
             }
         }
-        //else
-        //{
+
         for (i = 0; i< mastersList.length; i++)
         {
             if (!mastersList[i].isAvailable)
             {
                 mastersList[i].loopService+=dt;
-                // console.log(masters[i].loopService +">="+ masters[i].duration);
+
                 if (mastersList[i].loopService >= mastersList[i].duration)
                 {
                     console.log("AVAILABLE" + mastersList[i].id);
@@ -159,7 +188,6 @@ function GameController() {
                 }
             }
         }
-        //}
 
         function serviceIsReady(id) {
             var clients = gameModel.getInProgressClients();
@@ -171,8 +199,11 @@ function GameController() {
                     clients[i].inProgress = false;
                     clients[i].isWait = false;
                     gameModel.updateBalance(clients[i].priceToPay);
+
                 }
             }
+            var str = "Balance = " + gameModel.getBalance() + "<br>" + "New Clients: " + newClients.length;
+            gameView.updateInfoContainer(str);
         }
 
         function filterMastersByComplexity(list){
@@ -197,19 +228,40 @@ function GameController() {
         gameView.renderEntities(masters);
     }
 
+    function updateGame(dt)
+    {
+        if (prevTickTime < GameConstants.TICK_TIME)
+        {
+            prevTickTime += dt;
+        }
+        else
+        {
+            prevTickTime = 0;
+            updateDataGame(dt);
+        }
+
+
+    }
     /**
      * Game Step
      */
     function nextStep() {
         var now = Date.now();
-        var dt = (now - lastLoopTime) / 1000.0;
+        var dt = (now - lastLoopTime);
         updateGame(dt);
         renderGame();
-
         lastLoopTime = now;
         requestAnimationFrame(nextStep);
     }
 
 }
 
+GameController.prototype.resetGame = function()
+{
+
+};
+GameController.prototype.stopGame = function()
+{
+
+};
 app.controllers.GameController = new GameController();

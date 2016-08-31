@@ -8,11 +8,41 @@ function GameView(gameCtrl) {
     this.ctx = this.canvas.context;
     this.backPattern = null;
     //todo listeners actions by buttons
+    var infoContainer = document.getElementById('info');
+    this.updateInfoContainer = function(value){
+        infoContainer.innerHTML = value;
+    };
+    var controls = document.getElementById('controls');
+    this.addListenerControls = function (){
+        controls.addEventListener("click", function(e){
+            var target = e.target;
+            var buttonId = target.getAttribute('data-action');
+            if (!buttonId) return;
+            switch (buttonId)
+            {
+                case "add_master":
+                    gameController.addMaster();
+                    break;
+                case "add_client":
+                    gameController.addClient();
+                    break;
+                case "reset":
+                    gameController.resetGame();
+                    break;
+                case "stop":
+                    gameController.stopGame();
+                    break;
+
+            }
+        })
+    }
+
 }
 
 GameView.prototype.startGame = function(){
     this.canvas.add();
     this.backPattern = this.ctx.createPattern(resources.get(GameConstants.BACK_IMG_URL), 'repeat');
+    this.addListenerControls();
 };
 
 GameView.prototype.drawBackground = function(){
@@ -37,6 +67,7 @@ GameView.prototype.renderMaster = function(master){
 
     this.ctx.font = "16px times";
     this.ctx.fillText(master.name,0,30, 50);
+    drawProgressbar(this.ctx,35, master.duration, master.loopService);
     if (master.isAvailable)
     {
         this.ctx.drawImage(resources.get("assets/empty.png"),0, 52,50, 50);
@@ -46,7 +77,7 @@ GameView.prototype.renderMaster = function(master){
         this.ctx.drawImage(resources.get("assets/default.png"),0, 52,50, 50);
 
     }
-    //drawProgressbar(this.ctx);
+
     this.ctx.restore();
 };
 
@@ -66,6 +97,9 @@ GameView.prototype.renderEntities = function(entitiesList){
     }
 };
 
+GameView.prototype.updateGameInfo = function (value){
+    this.updateGameInfo(value);
+};
 function star(ctx, x, y, r, p, m)
 {
     ctx.save();
@@ -84,24 +118,18 @@ function star(ctx, x, y, r, p, m)
     ctx.restore();
 }
 
-function drawProgressbar(ctx) {
-    var width = 100,
-        height = 20,
-        max = 100,
-        val = 0;
+function drawProgressbar(ctx,y, max, val) {
+    var width = 50,
+        height = 10;
 
     // Draw the background
     ctx.save();
     ctx.fillStyle = '#000';
-    ctx.clearRect(0, 0, 100, 20);
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, y, width, height);
 
     // Draw the fill
-    ctx.fillStyle = '#777';
+    ctx.fillStyle = '#CC9966';
     var fillVal = Math.min(Math.max(val / max, 0), 1);
-   /* if (direction === 'vertical') {
-        ctx.fillRect(0, 0, width, fillVal * height);
-    } else {*/
-    ctx.fillRect(0, 0, fillVal * width, height);
+    ctx.fillRect(0, y, fillVal * width, height);
     ctx.restore();
 }
